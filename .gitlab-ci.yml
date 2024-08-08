@@ -1,0 +1,45 @@
+image: docker:24
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+  IMAGE_REGISTRY: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_BRANCH}
+
+services:
+  - docker:24-dind
+
+build:
+  stage: build
+  only:
+    refs:
+      - main
+      - development
+  before_script:
+    # # $CI_JOB_TOKEN is variable automatically added by Gitlab: see https://docs.gitlab.com/ee/ci/variables/predefined_variables.html#variables-reference
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY_IMAGE
+    - CACHE_IMAGE=$(echo "$CI_COMMIT_BEFORE_SHA" | cut -c1-8)
+    - if [ "$SOURCE_BRANCH" == "main" ]; then export CLUSTER_URL=$CLUSTER_URL_PRODUCTION; else export CLUSTER_URL=$CLUSTER_URL_DEVELOPMENT; fi
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CACHE_IMAGE || true # Allows us to use --cache-from
+    - docker build --rm --cache-from $CI_REGISTRY_IMAGE:$CACHE_IMAGE
+      --build-arg CLUSTER_URL=$CLUSTER_URL
+      --build-arg SUPPLIER=$SUPPLIER
+      --build-arg SUPPLIER_USER=$SUPPLIER_USER
+      --build-arg SUPPLIER_INVENTORY=$SUPPLIER_INVENTORY
+      --build-arg SUPPLIER_FINANCE=$SUPPLIER_FINANCE
+      --build-arg PRODUCT=$PRODUCT
+      --build-arg MASTER_DATA=$MASTER_DATA
+      --build-arg ALL_SUPPORT_V2=$ALL_SUPPORT_V2
+      -t $IMAGE_REGISTRY .
+    - docker tag  $IMAGE_REGISTRY $CI_REGISTRY_IMAGE
+    - docker push $IMAGE_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE
+
+deploy:
+  stage: deploy
+  variables:
+    DEPLOY_APP: khoomkha-backoffice
+    SOURCE_BRANCH: $CI_COMMIT_BRANCH
+  trigger:
+    project: khoomkha/supplier/k8s-template
