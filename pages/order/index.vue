@@ -375,11 +375,11 @@ export default {
     goToOrderDetail(item) {
       console.log(item)
       this.$router.push({ 
-        path: '/order/order-detail', 
-        query: { 
+        path: '/order/order-detail',
+        query: {
           OrderName : 'order-x001',
-          OrderId: 'Order-X001', 
-        } 
+          OrderId: 'Order-X001',
+        }
       });
     },
   }
