@@ -43,9 +43,13 @@
     <v-dialog v-if="addModal" max-width="700px" :value="true" persistent>
       <v-card>
         <div class="container">
-          <h2 class="text-center">Add grocery topic</h2>
+          <div class="text-center mb-6">
+            <v-btn :color="subtopicColor" @click="switchAddition(true)">Subtopic Addition</v-btn>
+            <v-btn :color="maintopicColor" @click="switchAddition(false)">Maintopic Addition</v-btn>
+          </div>
           <div class="justify-space-between align-center mb-3">
-            <v-text-field label="Maintopic" v-model="maintopic"></v-text-field>
+            <v-text-field label="Maintopic" v-model="maintopic" v-if="!subtopicAddition"></v-text-field>
+            <v-select :items="items" label="Maintopic" v-if="subtopicAddition"></v-select>
             <v-text-field label="Subtopic" v-model="subtopic"></v-text-field>
           </div>
           <div class="text-center">
@@ -65,8 +69,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="success">Confirm</v-btn>
           <v-btn color="error" @click="deleteModal = false">Cancel</v-btn>
+          <v-btn color="success">Confirm</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -84,6 +88,14 @@
         addModal: false,
         deleteModal: false,
         idDelete: '',
+        subtopicColor: 'success',
+        maintopicColor: '',
+        items: [
+          'การสมัครใช้งานแพลตฟอร์ม',
+          'ตรวจสอบระบบการเงิน',
+          'สถานะการจัดส่งสินค้า'
+        ],
+        subtopicAddition: true,
         headers: [
           { text: 'Index', value: 'index', align: 'left'},
           { text: 'ID', value: 'id', align: 'left'},
@@ -137,6 +149,16 @@
       deleteTopic(id) {
         this.idDelete = id;
         this.deleteModal = true;
+      },
+      switchAddition(state) {
+        this.subtopicAddition = state;
+        if(state) {
+          this.subtopicColor = 'success';
+          this.maintopicColor = '';
+        } else {
+          this.subtopicColor = '';
+          this.maintopicColor = 'success';
+        }
       }
     }
   }
