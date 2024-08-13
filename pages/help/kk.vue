@@ -126,6 +126,7 @@
         const buffer = await this.$axios.get(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategoryDetails?languageCode=TH&appType=KK`);
         const help = buffer.data.Data.Help;
         // console.log(help);
+        this.topic = [];
         for(let i = 0; i < help.length; i++) {
           this.items.push(help[i].CategoryId);
           for(let j = 0; j < help[i].SubCategory.length; j++) {
@@ -179,6 +180,7 @@
       async deleteMaintopic(id) {
         let response = await this.$axios.delete(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategory?helpCategoryId=${id}`);
         console.log(response);
+        this.getApi();
         this.deleteModal = false;
       }
     },
