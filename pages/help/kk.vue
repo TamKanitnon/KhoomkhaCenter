@@ -13,15 +13,6 @@
               </v-btn>
             </div>
           </div>
-          <v-row class="my-3 mx-1">
-            <v-text-field
-              v-model="filterKeyword"
-              label="Filter Search"
-              outlined
-              dense
-              hide-details="auto"
-            ></v-text-field>
-          </v-row>
           <v-data-table
             :headers="headers"
             :items="topic"
@@ -33,7 +24,7 @@
           </template>
           <template v-slot:[`item.action`]="{ item }">
             <v-btn color="primary" @click="editTopic(item.id)">แก้ไข</v-btn>
-            <v-btn color="error" @click="deleteTopic(item.id)">ลบ</v-btn>
+            <v-btn color="error" @click="deleteTopic(item.maintopicId, item.maintopic)">ลบ</v-btn>
           </template>
           </v-data-table>
         </v-col>
@@ -53,7 +44,8 @@
             <v-text-field label="Subtopic" v-model="subtopic"></v-text-field>
           </div>
           <div class="text-center">
-            <v-btn color="primary">บันทึก</v-btn>
+            <v-btn color="primary" v-if="subtopicAddition">บันทึก (S)</v-btn>
+            <v-btn color="primary" v-if="!subtopicAddition" @click="createMaintopic" >บันทึก (M)</v-btn>
             <v-btn color="error" @click="addModal = false">ยกเลิก</v-btn>
           </div>
         </div>
@@ -65,12 +57,13 @@
         <v-card-title class="headline">Confirm Delete</v-card-title>
         <v-card-text>
           Are you sure you want to delete this item? <br>
+          Item Maintopic: {{ nameDelete }} <br>
           Item ID: {{ idDelete }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="error" @click="deleteModal = false">Cancel</v-btn>
-          <v-btn color="success">Confirm</v-btn>
+          <v-btn color="success" @click="deleteMaintopic(idDelete)">Confirm</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -88,53 +81,21 @@
         addModal: false,
         deleteModal: false,
         idDelete: '',
+        nameDelete: '',
         subtopicColor: 'success',
         maintopicColor: '',
-        items: [
-          'การสมัครใช้งานแพลตฟอร์ม',
-          'ตรวจสอบระบบการเงิน',
-          'สถานะการจัดส่งสินค้า'
-        ],
         subtopicAddition: true,
         headers: [
           { text: 'Index', value: 'index', align: 'left'},
-          { text: 'ID', value: 'id', align: 'left'},
+          { text: 'SubtopicID', value: 'subtopicId', align: 'left'},
           { text: 'Maintopic', value: 'maintopic', align: 'left' },
           { text: 'Subtopic', value: 'subtopic', align: 'left' },
           { text: 'Action', value: 'action', align: 'center' },
         ],
-        topic: [
-          {
-            id: '1111',
-            maintopic: 'การสมัครใช้งานแพลตฟอร์ม',
-            subtopic: 'ลงทะเบียนยังไง'
-          },
-          {
-            id: '2222',
-            maintopic: 'การสมัครใช้งานแพลตฟอร์ม',
-            subtopic: 'เข้าสู่ระบบยังไง',
-          },
-          {
-            id: '3333',
-            maintopic: 'ตรวจสอบระบบการเงิน',
-            subtopic: 'ตรวจสอบยอดขายรวมยังไง',
-          },
-          {
-            id: '4444',
-            maintopic: 'ตรวจสอบระบบการเงิน',
-            subtopic: 'ตรวจสอบยอดค่าใช้จ่ายรวมยังไง',
-          },
-          {
-            id: '5555',
-            maintopic: 'สถานะการจัดส่งสินค้า',
-            subtopic: 'ตรวจสอบสถานะการจัดส่งสินค้ายังไง',
-          },
-          {
-            id: '6666',
-            maintopic: 'สถานะการจัดส่งสินค้า',
-            subtopic: 'สั่งสินค้าจากร้านค้าส่งได้ยังไง',
-          },
-        ],
+        items: [],
+        topic: [],
+        maintopic: '',
+        subtopic: ''
       }
     },
     methods: {
@@ -146,8 +107,9 @@
           }
         });
       },
-      deleteTopic(id) {
+      deleteTopic(id, name) {
         this.idDelete = id;
+        this.nameDelete = name;
         this.deleteModal = true;
       },
       switchAddition(state) {
@@ -159,7 +121,69 @@
           this.subtopicColor = '';
           this.maintopicColor = 'success';
         }
+      },
+      async getApi() {
+        const buffer = await this.$axios.get(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategoryDetails?languageCode=TH&appType=KK`);
+        const help = buffer.data.Data.Help;
+        // console.log(help);
+        for(let i = 0; i < help.length; i++) {
+          this.items.push(help[i].CategoryId);
+          for(let j = 0; j < help[i].SubCategory.length; j++) {
+            const topic = {
+              maintopicId: help[i].CategoryId,
+              maintopic: help[i].Category,
+              subtopicId: help[i].SubCategory[j].HelpSubCategoryId,
+              subtopic: help[i].SubCategory[j].SubCategory
+            }
+            // console.log(topic);
+            this.topic.push(topic);
+          }
+        }
+      },
+      async createMaintopic() {
+        if(this.subtopic == '') {
+          console.log('Input subtopic shout be not empty.');
+          return;
+        }
+        const bodyMaintopic = {
+          Category: this.maintopic,
+          LanguageCode: "TH",
+          AppType: "KK",
+          IsActive: true
+        }
+        let response = await this.$axios.post(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategory`, bodyMaintopic, {
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        });
+        const MaintopicId = response.data.Data.HelpCategoryId;
+
+        const bodySubtopic = {
+          HelpCategoryId: MaintopicId,
+          SubCategory: this.subtopic,
+          Description: "<p>input description</p>",
+          LanguageCode: "TH",
+          IsActive: true
+        }
+        response = await this.$axios.post(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpSubCategory/HelpSubCategory`, bodySubtopic, {
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        });
+
+        this.maintopic = '';
+        this.subtopic = '';
+        this.getApi();
+        this.addModal = false;
+      },
+      async deleteMaintopic(id) {
+        let response = await this.$axios.delete(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategory?helpCategoryId=${id}`);
+        console.log(response);
+        this.deleteModal = false;
       }
+    },
+    created() {
+      this.getApi();
     }
   }
 </script>
