@@ -1,6 +1,5 @@
 <template>
     <div class="container">
-        <loading-page v-if="loading"></loading-page>
         <h2 class="text-center mt-2 mb-4">Help : Edit Khoomkha Grocery</h2>
         <div class="row my-5">
             <v-row class="pa-2">
@@ -14,8 +13,8 @@
             </v-row>
         </div>
         <div class="text-center">
-            <v-btn color="primary">บันทึก</v-btn>
-            <v-btn color="error" @click="cancel()">ยกเลิก</v-btn>
+            <v-btn color="primary" @click="edit">บันทึก</v-btn>
+            <v-btn color="error" @click="cancel">ยกเลิก</v-btn>
         </div>
     </div>
 </template>
@@ -29,10 +28,11 @@ export default {
   },
   data() {
     return {
-        content: '<p>พิมพ์ข้อความหรืออัพโหลดรูปภาพลงไปในนี้</p>',
-        maintopic: 'การสมัครใช้งานแพลตฟอร์ม',
-        subtopic: 'ลงทะเบียนยังไง',
-        id: ''
+        maintopicId: '',
+        maintopic: '',
+        subtopicId: '',
+        subtopic: '',
+        content: '',
     }
   },
   methods: {
@@ -41,10 +41,50 @@ export default {
           path: '/help/kk',
         });
     },
+    async getApi() {
+      this.maintopicId = this.$route.query.maintopicId;
+      this.subtopicId = this.$route.query.subtopicId;
+
+      let response = await this.$axios.get(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategory?helpCategoryId=${this.maintopicId}`);
+      this.maintopic = response.data.Data.Category;
+      response = await this.$axios.get(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpSubCategory/HelpSubCategory?helpSubCategoryId=${this.subtopicId}`);
+      this.subtopic = response.data.Data.SubCategory;
+      this.content = response.data.Data.Description;
+    },
+    async edit() {
+      let bodyMaintopic = {
+        HelpCategoryId: this.maintopicId,
+        Category: this.maintopic,
+        LanguageCode: "TH",
+        AppType: "KK",
+        IsActive: true
+      };
+      let response = await this.$axios.put(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategory`, bodyMaintopic, {
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      });
+      console.log(response);
+      let bodySubtopic = {
+        HelpSubCategoryId: this.subtopicId,
+        HelpCategoryId: this.maintopicId,
+        SubCategory: this.subtopic,
+        Description: this.content,
+        LanguageCode: "TH",
+        IsActive: true
+      };
+      response = await this.$axios.put(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpSubCategory/HelpSubCategory`, bodySubtopic, {
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      });
+      console.log(response);
+
+      this.$router.push({ path: '/help/kk' });
+    }
   },
   created() {
-    this.id = this.$route.query.id;
-    console.log(this.id);
+    this.getApi();
   }
 };
 </script>

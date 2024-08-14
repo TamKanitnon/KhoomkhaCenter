@@ -23,7 +23,7 @@
             {{ index + 1 }}
           </template>
           <template v-slot:[`item.action`]="{ item }">
-            <v-btn color="primary" @click="editTopic(item.id)">แก้ไข</v-btn>
+            <v-btn color="primary" @click="editTopic(item.maintopicId, item.subtopicId)">แก้ไข</v-btn>
             <v-btn color="error" @click="deleteTopic(item.maintopicId, item.maintopic)">ลบ</v-btn>
           </template>
           </v-data-table>
@@ -91,6 +91,8 @@
         subtopicAddition: true,
         headers: [
           { text: 'Index', value: 'index', align: 'left'},
+          // { text: 'MaintopicID', value: 'maintopicId', align: 'left' },
+          // { text: 'SubtopicID', value: 'subtopicId', align: 'left' },
           { text: 'Maintopic', value: 'maintopic', align: 'left' },
           { text: 'Subtopic', value: 'subtopic', align: 'left' },
           { text: 'Action', value: 'action', align: 'center' },
@@ -103,11 +105,12 @@
       }
     },
     methods: {
-      editTopic(id) {
+      editTopic(MainID, SubID) {
         this.$router.push({ 
           path: '/help/kk-edit',
           query: {
-            id: id
+            maintopicId: MainID,
+            subtopicId: SubID
           }
         });
       },
@@ -190,7 +193,7 @@
         const bodySubtopic = {
           HelpCategoryId: this.maintopicId,
           SubCategory: this.subtopic,
-          Description: "<i>Can you help to explain about this topic?</i>",
+          Description: "<i>พิมพ์ข้อความหรืออัพโหลดรูปภาพลงไปในนี้</i>",
           LanguageCode: "TH",
           IsActive: true
         }
