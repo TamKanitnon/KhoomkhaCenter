@@ -40,12 +40,16 @@
           </div>
           <div class="justify-space-between align-center mb-3">
             <v-text-field label="Maintopic" v-model="maintopic" v-if="!subtopicAddition"></v-text-field>
-            <v-select :items="items" label="Maintopic" v-if="subtopicAddition"></v-select>
+            <label class="label-box" v-if="subtopicAddition">Select maintopic</label>
+            <select class="select-box" v-if="subtopicAddition" v-model="maintopicId">
+              <option selected></option>
+              <option v-for="item in items" :value="item.maintopicId">{{ item.maintopic }}</option>
+            </select>
             <v-text-field label="Subtopic" v-model="subtopic"></v-text-field>
           </div>
           <div class="text-center">
-            <v-btn color="primary" v-if="subtopicAddition">บันทึก (S)</v-btn>
-            <v-btn color="primary" v-if="!subtopicAddition" @click="createMaintopic" >บันทึก (M)</v-btn>
+            <v-btn color="primary" v-if="subtopicAddition" @click="createSubtopic">บันทึก</v-btn>
+            <v-btn color="primary" v-if="!subtopicAddition" @click="createMaintopic">บันทึก</v-btn>
             <v-btn color="error" @click="addModal = false">ยกเลิก</v-btn>
           </div>
         </div>
@@ -87,13 +91,13 @@
         subtopicAddition: true,
         headers: [
           { text: 'Index', value: 'index', align: 'left'},
-          { text: 'SubtopicID', value: 'subtopicId', align: 'left'},
           { text: 'Maintopic', value: 'maintopic', align: 'left' },
           { text: 'Subtopic', value: 'subtopic', align: 'left' },
           { text: 'Action', value: 'action', align: 'center' },
         ],
         items: [],
         topic: [],
+        maintopicId: '',
         maintopic: '',
         subtopic: ''
       }
@@ -126,9 +130,10 @@
         const buffer = await this.$axios.get(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategoryDetails?languageCode=TH&appType=KK`);
         const help = buffer.data.Data.Help;
         // console.log(help);
+        this.items = [];
         this.topic = [];
         for(let i = 0; i < help.length; i++) {
-          this.items.push(help[i].CategoryId);
+          this.items.push({ maintopicId: help[i].CategoryId, maintopic: help[i].Category });
           for(let j = 0; j < help[i].SubCategory.length; j++) {
             const topic = {
               maintopicId: help[i].CategoryId,
@@ -143,7 +148,7 @@
       },
       async createMaintopic() {
         if(this.subtopic == '') {
-          console.log('Input subtopic shout be not empty.');
+          console.log('Input subtopic shout not be empty.');
           return;
         }
         const bodyMaintopic = {
@@ -177,6 +182,29 @@
         this.getApi();
         this.addModal = false;
       },
+      async createSubtopic() {
+        if((this.subtopic == '') || (this.maintopicId == '')) {
+          console.log('Input maintopic and subtopic shout not be empty.');
+          return;
+        }
+        const bodySubtopic = {
+          HelpCategoryId: this.maintopicId,
+          SubCategory: this.subtopic,
+          Description: "<i>Can you help to explain about this topic?</i>",
+          LanguageCode: "TH",
+          IsActive: true
+        }
+        let response = await this.$axios.post(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpSubCategory/HelpSubCategory`, bodySubtopic, {
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        });
+        console.log(response);
+        this.subtopic = '';
+        this.maintopicId = '',
+        this.getApi();
+        this.addModal = false;
+      },
       async deleteMaintopic(id) {
         let response = await this.$axios.delete(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategory?helpCategoryId=${id}`);
         console.log(response);
@@ -189,3 +217,20 @@
     }
   }
 </script>
+
+<style scoped>
+  .select-box {
+    border-bottom: 1px solid #8f8989;
+    width: 100%;
+    padding: 8px 0 6px;
+    outline: none;
+    background: #f5f3f3;
+    cursor: pointer;
+    margin-bottom: 24px;
+  }
+  .label-box {
+    font-size: 13px;
+    color: #8f8989;
+    float: none;
+  }
+</style>
