@@ -1,12 +1,11 @@
 <template>
   <div class="container">
-    <loading-page v-if="loading"></loading-page>
     <h2 class="text-center mt-2 mb-4">Help : Khoomkha Grocery</h2>
     <div class="row my-5">
       <v-row class="pa-2">
         <v-col clos="12">
           <div class="d-flex justify-space-between align-center mb-3">
-            <div> Total item found : {{ topic.length }} </div>
+            <div> Total item found : <b>{{ topic.length }}</b> </div>
             <div>
               <v-btn @click="addModal = true" color="success">
                 <v-icon class="pr-1"> mdi-plus</v-icon> เพิ่ม
@@ -16,7 +15,7 @@
           <v-data-table
             :headers="headers"
             :items="topic"
-            :items-per-page="15"
+            :items-per-page="100"
             class="elevation-1"
           >
           <template v-slot:[`item.index`]="{ index }">
@@ -61,8 +60,8 @@
         <v-card-title class="headline">Confirm Delete</v-card-title>
         <v-card-text>
           Are you sure you want to delete this item? <br>
-          Item Maintopic: {{ nameDelete }} <br>
-          Item ID: {{ idDelete }}
+          Item ID: <b>{{ idDelete }}</b> <br>
+          Item Maintopic: <b>{{ nameDelete }}</b>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -71,9 +70,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <v-dialog></v-dialog>
-
   </div>
 </template>
 
@@ -81,7 +77,6 @@
   export default {
     data () {
       return {
-        loading: false,
         addModal: false,
         deleteModal: false,
         idDelete: '',
@@ -91,8 +86,6 @@
         subtopicAddition: true,
         headers: [
           { text: 'Index', value: 'index', align: 'left'},
-          // { text: 'MaintopicID', value: 'maintopicId', align: 'left' },
-          // { text: 'SubtopicID', value: 'subtopicId', align: 'left' },
           { text: 'Maintopic', value: 'maintopic', align: 'left' },
           { text: 'Subtopic', value: 'subtopic', align: 'left' },
           { text: 'Action', value: 'action', align: 'center' },
@@ -130,7 +123,7 @@
         }
       },
       async getApi() {
-        const buffer = await this.$axios.get(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategoryDetails?languageCode=TH&appType=KK`);
+        const buffer = await this.$axios.get(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategoryDetails?languageCode=TH&appType=GC`);
         const help = buffer.data.Data.Help;
         // console.log(help);
         this.items = [];
@@ -157,7 +150,7 @@
         const bodyMaintopic = {
           Category: this.maintopic,
           LanguageCode: "TH",
-          AppType: "KK",
+          AppType: "GC",
           IsActive: true
         }
         let response = await this.$axios.post(`${process.env.CLUSTER_URL}${process.env.MASTER_DATA}HelpCategory/HelpCategory`, bodyMaintopic, {
