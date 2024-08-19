@@ -18,6 +18,14 @@
                     :items-per-page="100"
                     class="elevation-1"
                 >
+                    <template v-slot:[`item.maintopic`]="{ item }">
+                        <span>{{ item.maintopic }}</span> <br>
+                        <span class="id">{{ item.maintopicId }}</span>
+                    </template>
+                    <template v-slot:[`item.subtopic`]="{ item }">
+                        <span>{{ item.subtopic }}</span> <br>
+                        <span class="id">{{ item.subtopicId }}</span>
+                    </template>
                     <template v-slot:[`item.index`]="{ index }">
                         {{ index + 1 }}
                     </template>
@@ -229,5 +237,9 @@ export default {
         font-size: 13px;
         color: #8f8989;
         float: none;
+    }
+    .id {
+        font-size: 12px;
+        color: #f0e4e4;
     }
 </style>
