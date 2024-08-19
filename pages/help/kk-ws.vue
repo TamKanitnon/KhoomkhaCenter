@@ -240,6 +240,6 @@ export default {
     }
     .id {
         font-size: 12px;
-        color: #f0e4e4;
+        color: #c2bdbd;
     }
 </style>
